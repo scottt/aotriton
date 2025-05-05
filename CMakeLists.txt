@@ -45,6 +45,7 @@ option(AOTRITON_BUILD_FOR_TUNING "Build all GPU kernels and set -DAOTRITON_BUILD
 set(AOTRITON_BUILD_FOR_TUNING_BUT_SKIP_KERNEL "" CACHE STRING "Use tuning database for certain kernels when AOTRITON_BUILD_FOR_TUNING=ON")
 option(AOTRITON_ENABLE_FP32_INPUTS "Enable FP32 support." ON)
 option(AOTRITON_NOIMAGE_MODE "Only build C++ Shim part. Kernel image builds are disabled" OFF)
+set(INSTALL_TRITON_FROM_WHEEL "" CACHE FILEPATH "Path to pre-built triton wheel to install. Stops building of triton from source.")
 set(AOTRITON_GPU_BUILD_TIMEOUT "8.0" CACHE STRING "GPU kernel compiler times out after X minutes. 0 for indefinite. Highly recommended if AOTRITON_BUILD_FOR_TUNING=On.")
 set(AOTRITON_TARGET_ARCH "gfx90a;gfx942;gfx1100;gfx1151;gfx1201" CACHE STRING "Target GPU Architecture. Select all GPUs within the given list")
 set(TARGET_GPUS "OBSOLETE" CACHE STRING "OBSOLETE. To select only one GPU, use AOTRITON_TARGET_ARCH or AOTRITON_OVERRIDE_TARGET_GPUS.")
@@ -123,11 +124,18 @@ if(NOT AOTRITON_NOIMAGE_MODE)
     set(AOTRITON_TRITON_SO "${VENV_SITE}/triton/_C/libtriton.so")
   endif()
 
-  add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"
-    COMMAND ${CMAKE_COMMAND} -E env TRITON_BUILD_PROTON=OFF VIRTUAL_ENV=${VENV_DIR} TRITON_BUILD_DIR=${TRITON_BUILD_DIR} "${VENV_DIR}/bin/python" -m pip install .
-    # COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} python -m pip show triton
-    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/third_party/triton/python/"
-  )
+  if(INSTALL_TRITON_FROM_WHEEL)
+    add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"
+      COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR}
+        "${VENV_BIN_PYTHON}" -m pip install "${INSTALL_TRITON_FROM_WHEEL}"
+    )
+  else()
+    add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"
+      COMMAND ${CMAKE_COMMAND} -E env TRITON_BUILD_PROTON=OFF VIRTUAL_ENV=${VENV_DIR} TRITON_BUILD_DIR=${TRITON_BUILD_DIR} "${VENV_BIN_PYTHON}" -m pip install .
+      # COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} python -m pip show triton
+      WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/third_party/triton/python/"
+    )
+  endif()
   add_custom_target(aotriton_venv_triton ALL DEPENDS "${AOTRITON_TRITON_SO}")
 endif(NOT AOTRITON_NOIMAGE_MODE)
 
