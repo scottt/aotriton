@@ -93,11 +93,17 @@ message("VENV_DIR ${VENV_DIR}")
 # unset(Python3_EXECUTABLE)
 # find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -c "import site; print(site.getsitepackages()[0], end='')" OUTPUT_VARIABLE VENV_SITE)
+if(WIN32)
+  set(VENV_BIN_PYTHON "${VENV_DIR}/Scripts/python")
+else()
+  set(VENV_BIN_PYTHON "${VENV_DIR}/bin/python")
+endif()
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_BIN_PYTHON}" -c "import site; print(site.getsitepackages()[0], end='')" OUTPUT_VARIABLE VENV_SITE)
 # string(STRIP "${VENV_SITE}" VENV_SITE)
 message("VENV_SITE ${VENV_SITE}")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_DIR}/bin/python" -m pip install -r "${CMAKE_CURRENT_LIST_DIR}/requirements.txt")
+execute_process(COMMAND ${CMAKE_COMMAND} -E env VIRTUAL_ENV=${VENV_DIR} "${VENV_BIN_PYTHON}" -m pip install -r "${CMAKE_CURRENT_LIST_DIR}/requirements.txt")
 
 # AOTRITON_NOIMAGE_MODE does not need Triton
 if(NOT AOTRITON_NOIMAGE_MODE)
@@ -105,7 +111,11 @@ if(NOT AOTRITON_NOIMAGE_MODE)
   execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${TRITON_BUILD_DIR}")
   # set(AOTRITON_TRITON_EGGLINK "${VENV_SITE}/triton.egg-link")
   # message("AOTRITON_TRITON_EGGLINK ${AOTRITON_TRITON_EGGLINK}")
-  set(AOTRITON_TRITON_SO "${VENV_SITE}/triton/_C/libtriton.so")
+  if(WIN32)
+    set(AOTRITON_TRITON_SO "${VENV_SITE}/triton/_C/libtriton.pyd")
+  else()
+    set(AOTRITON_TRITON_SO "${VENV_SITE}/triton/_C/libtriton.so")
+  endif()
 
   add_custom_command(OUTPUT "${AOTRITON_TRITON_SO}"
     COMMAND ${CMAKE_COMMAND} -E env TRITON_BUILD_PROTON=OFF VIRTUAL_ENV=${VENV_DIR} TRITON_BUILD_DIR=${TRITON_BUILD_DIR} "${VENV_DIR}/bin/python" -m pip install .
@@ -118,5 +128,5 @@ endif(NOT AOTRITON_NOIMAGE_MODE)
 add_subdirectory(v2src)
 
 if(NOT AOTRITON_NO_PYTHON)
-  add_subdirectory(bindings) # FIXME: compile python binding
+  add_subdirectory(bindings)
 endif()
