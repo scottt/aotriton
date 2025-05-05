@@ -5,8 +5,10 @@ aux_source_directory(. PYAOTRITON_SRC)
 # find_package(hip REQUIRED)
 pybind11_add_module(pyaotriton ${PYAOTRITON_SRC})
 # target_link_libraries(pyaotriton PRIVATE hip::device)
-target_compile_features(pyaotriton PRIVATE cxx_std_20)
-message(STATUS "ZSTD_TARGET in bindings/: ${ZSTD_TARGET}")
+set_target_properties(pyaotriton PROPERTIES
+  CXX_STANDARD 20
+  CXX_STANDARD_REQUIRED YES
+)
 target_link_libraries(pyaotriton PUBLIC aotriton)
 if(AOTRITON_COMPRESS_KERNEL)
   target_link_libraries(pyaotriton PRIVATE zstd_interface)
