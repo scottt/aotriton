@@ -233,23 +233,27 @@ target_link_libraries(aotriton_v2 PUBLIC hip::host hip::amdhip64)
 set_target_properties(aotriton_v2 PROPERTIES VERSION
   ${AOTRITON_VERSION_MAJOR_INT}.${AOTRITON_VERSION_MINOR_INT}.${AOTRITON_VERSION_PATCH_INT})
 
-# `set_aotriton_version.ld` adds "AOTRITON <VERSION>" at the end of the .comment section
-execute_process(
-  COMMAND ${CMAKE_COMMAND}
-  -E env VIRTUAL_ENV=${VENV_DIR}
-  "${VENV_BIN_PYTHON}" -m v2python.ld_script
-  -o "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld"
-  ${AOTRITON_VERSION_MAJOR_INT}
-  ${AOTRITON_VERSION_MINOR_INT}
-  ${AOTRITON_VERSION_PATCH_INT}
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_PARENT_DIR}"
-  COMMAND_ERROR_IS_FATAL ANY
-)
-target_link_options(aotriton_v2 PRIVATE
-                    -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
+if(NOT WIN32)
+  # `set_aotriton_version.ld` adds "AOTRITON <VERSION>" at the end of the ELF ".comment" section
+  execute_process(
+    COMMAND ${CMAKE_COMMAND}
+    -E env VIRTUAL_ENV=${VENV_DIR}
+    "${VENV_BIN_PYTHON}" -m v2python.ld_script
+    -o "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld"
+    ${AOTRITON_VERSION_MAJOR_INT}
+    ${AOTRITON_VERSION_MINOR_INT}
+    ${AOTRITON_VERSION_PATCH_INT}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_PARENT_DIR}"
+    COMMAND_ERROR_IS_FATAL ANY
+  )
+  target_link_options(aotriton_v2 PRIVATE
+                      -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
+endif(NOT WIN32)
+
 # Otherwise the binary size blows up
 # FIXME: Properly export symbols
 set_target_properties(aotriton_v2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(aotriton_v2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 include(GNUInstallDirs)
 message("CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}")
