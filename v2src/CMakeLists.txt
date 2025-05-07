@@ -209,6 +209,8 @@ generate_export_header(aotriton_v2
   EXPORT_MACRO_NAME AOTRITON_API
   EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/../include/aotriton/export.h
 )
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/../include/aotriton/export.h
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/aotriton)
 
 target_include_directories(aotriton_v2 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../include>)
 # for <build>/include/aotriton/config.h. Code should use <aotriton/config.h>
