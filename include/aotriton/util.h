@@ -8,8 +8,9 @@
 #include "dtypes.h"
 #include "runtime.h"
 #include <functional>
-#include <stdint.h>
+#include <cstdint>
 #include <string_view>
+#include <array>
 
 namespace AOTRITON_NS {
 
@@ -154,11 +155,12 @@ private:
   DType dtype_ = kUnknown;
 };
 
-
+#ifndef aotriton_v2_EXPORTS
 extern template class TensorView<1>;
 extern template class TensorView<2>;
 extern template class TensorView<3>;
 extern template class TensorView<4>;
+#endif // aotriton_v2_EXPORTS
 
 GpuArch getArchFromStream(hipStream_t);
 bool isArchExperimentallySupported(hipStream_t);

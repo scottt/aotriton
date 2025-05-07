@@ -172,19 +172,36 @@ if(NOT AOTRITON_NOIMAGE_MODE)
   add_dependencies(aotriton_v2_gen_shim aotriton_v2_compile)
 endif()
 
+if(WIN32)
+  find_package(dlfcn-win32 REQUIRED)
+  set(CMAKE_DL_LIBS dlfcn-win32::dl)
+endif()
+
 add_library(aotriton_v2 SHARED ${SHIM_CC_FILES})
 set_target_properties(aotriton_v2 PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(aotriton_v2 PRIVATE ${CMAKE_DL_LIBS})
 add_dependencies(aotriton_v2 aotriton_v2_gen_shim)
 if(AOTRITON_ENABLE_SUFFIX)
   set_target_properties(aotriton_v2 PROPERTIES OUTPUT_NAME "aotriton${AOTRITON_NAME_SUFFIX}_v2")
 endif()
+
+include(GenerateExportHeader)
+generate_export_header(aotriton_v2
+  BASE_NAME aotriton
+  EXPORT_MACRO_NAME AOTRITON_API
+  EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/../include/aotriton/export.h
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/../include/aotriton/export.h
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/aotriton)
 
 target_include_directories(aotriton_v2 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../include>)
 # for <build>/include/aotriton/config.h. Code should use <aotriton/config.h>
 target_include_directories(aotriton_v2 PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>)
 target_include_directories(aotriton_v2 INTERFACE $<INSTALL_INTERFACE:include>)
 target_include_directories(aotriton_v2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_options(aotriton_v2 PRIVATE -fPIC)
+set_target_properties(aotriton_v2 PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
 if(AOTRITON_BUILD_FOR_TUNING)
   target_compile_definitions(aotriton_v2 PRIVATE -DAOTRITON_BUILD_FOR_TUNING=1)
 else(AOTRITON_BUILD_FOR_TUNING)
