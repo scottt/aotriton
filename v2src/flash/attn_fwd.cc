@@ -61,7 +61,7 @@ _attn_fwd_common(T4 q,
       dim3 grid {
         nblocks,
         uint32_t(params.Q->size(1)),
-        params.Batch,
+        uint32_t(params.Batch),
       };
 #if AOTRITON_VERBOSE
       std::cerr << "Grid conf " << grid.x << " " << grid.y << " " << grid.z << std::endl;
@@ -74,7 +74,7 @@ _attn_fwd_common(T4 q,
     int from_cu = params.Num_CU * params.GRID_CU_MULTIP;
     int from_in = nblocks * params.Num_head_q * params.Batch;
     dim3 grid {
-      std::min(from_cu, from_in),
+      uint32_t(std::min(from_cu, from_in)),
       1,
       1,
     };
@@ -140,7 +140,7 @@ _attn_fwd_common(T4 q,
     .USE_P_SCALE = false,
     .persistent_atomic_counter = &persistent_atomic_counter,
     .Num_CU = is_causal ? getMultiProcessorCount(stream) : 80,
-    .Batch = num_seqlens == 0 ? q.size(0) : num_seqlens,
+    .Batch = int32_t(num_seqlens == 0 ? q.size(0) : num_seqlens),
   };
 #if AOTRITON_BUILD_FOR_TUNING
   if (extargs) {
