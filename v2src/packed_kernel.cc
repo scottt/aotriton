@@ -12,7 +12,6 @@
 #include <filesystem>
 #include <iostream>
 #include <lzma.h>
-#include <unistd.h>
 
 #ifdef NDEBUG
 #define AOTRITON_KERNEL_VERBOSE 0
@@ -42,6 +41,55 @@ locate_aotriton_images() {
 
 }
 
+#ifdef _MSC_VER
+
+#include <io.h>
+#if !defined(ssize_t)
+    #include <BaseTsd.h> // For SSIZE_T
+    typedef SSIZE_T ssize_t;
+#endif
+
+static int fd_open(const char *pathname, int msvc_flags) {
+    return _open(pathname, msvc_flags | _O_BINARY);
+}
+
+static int fd_close(int fd) {
+  return _close(fd);
+}
+
+static ssize_t fd_read(int fd, void *buf, size_t count) {
+  unsigned int bytes_to_read;
+
+  if (count == 0) {
+    return 0;
+  }
+
+  // _read takes an unsigned int for the count.
+  // Cap the count if it's larger than what unsigned int can hold.
+  if (count > UINT_MAX) {
+    bytes_to_read = UINT_MAX;
+  } else {
+    bytes_to_read = (unsigned int)count;
+  }
+
+  int bytes_actually_read = _read(fd, buf, bytes_to_read);
+  return (ssize_t)bytes_actually_read; // _read returns int
+}
+#else // _MSC_VER
+#include <unistd.h>
+static int fd_open(const char *pathname, int msvc_flags) {
+  return open(pathname, msvc_flags);
+}
+
+static int fd_close(int fd) {
+  return close(fd);
+}
+
+static ssize_t fd_read(int fd, void *buf, size_t count) {
+  return read(fd, buf, count);
+}
+#endif // _MSC_VER
+
 namespace AOTRITON_NS {
 
 std::shared_mutex PackedKernel::registry_mutex_;
@@ -62,33 +110,31 @@ PackedKernel::open(std::string_view package_path) {
   if (registry_.contains(package_path))
     return registry_[package_path];
   const auto& storage_base = locate_aotriton_images();
-#if AOTRITON_KERNEL_VERBOSE
-  std::cerr << "open dir " << storage_base << std::endl;
-#endif
-  int dirfd = ::open(storage_base.c_str(), O_RDONLY);
   std::string rel_path(package_path);
   rel_path += ".aks2";
 #if AOTRITON_KERNEL_VERBOSE
-  std::cerr << "openat " << rel_path << std::endl;
+  std::cerr << "open " << rel_path << std::endl;
 #endif
-  int aks2fd = ::openat(dirfd, rel_path.c_str(), O_RDONLY);
+  const auto& u8_temp = (storage_base / rel_path).u8string();
+  std::string p = std::string(reinterpret_cast<const char*>(u8_temp.data()),
+                       u8_temp.size());
+  int aks2fd = fd_open((const char *)(p.c_str()), O_RDONLY);
   if (aks2fd < 0) {
 #if AOTRITON_KERNEL_VERBOSE
-    std::cerr << "openat(\"" << storage_base << "\", \"" << rel_path << "\")"
+    std::cerr << "open(\"" << p << "\")"
               << " failed. errno: " << errno << std::endl;
 #endif
     return nullptr;
   }
   auto ret = std::make_shared<PackedKernel>(aks2fd);
-  close(aks2fd);
-  close(dirfd);
+  fd_close(aks2fd);
   if (ret->status() == hipSuccess) {
     registry_.emplace(package_path, ret);
     return ret;
   }
 #if AOTRITON_KERNEL_VERBOSE
   std::cerr << "PackedKernel::open(" << package_path << ") failed."
-            << " Final status " << ret->status() << std::endl;
+            << " Final status: " << hipGetErrorString(ret->status()) << std::endl;
 #endif
   return nullptr;
 }
@@ -125,7 +171,7 @@ struct AKS2_Metadata {
 // N * varlen: Kernel Images (TODO: alignment requirements?)
 PackedKernel::PackedKernel(int fd) {
   AKS2_Header header;
-  auto header_read = ::read(fd, &header, sizeof(AKS2_Header));
+  auto header_read = fd_read(fd, &header, sizeof(AKS2_Header));
   if (header_read == sizeof(AKS2_MAGIC) && std::string_view(header.magic, 4) != AKS2_MAGIC) {
     final_status_ = hipErrorInvalidSource; // Broken at XZ level
     return;
@@ -151,7 +197,7 @@ PackedKernel::PackedKernel(int fd) {
   while (true) {
     if (strm.avail_in == 0) {
       strm.next_in = inbuf;
-      auto rbytes = read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
+      auto rbytes = fd_read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
       if (rbytes <= 0) {
         action = LZMA_FINISH;
         break;
@@ -217,7 +263,7 @@ PackedKernel::filter(std::string_view stem_name) const {
   }
   return { kernel_start_ + meta->offset,
            meta->image_size,
-           meta->shared_memory,
+           int(meta->shared_memory),
            dim3 { meta->number_of_threads, 1, 1 } };
 }
 
