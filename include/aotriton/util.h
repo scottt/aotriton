@@ -176,12 +176,10 @@ private:
   DType dtype_ = kUnknown;
 };
 
-#ifndef aotriton_v2_EXPORTS
-extern template class TensorView<1>;
-extern template class TensorView<2>;
-extern template class TensorView<3>;
-extern template class TensorView<4>;
-#endif // aotriton_v2_EXPORTS
+// extern template class TensorView<1>;
+// extern template class TensorView<2>;
+// extern template class TensorView<3>;
+// extern template class TensorView<4>;
 
 Gpu AOTRITON_API getGpuFromStream(hipStream_t);
 bool AOTRITON_API isArchExperimentallySupported(hipStream_t);
