@@ -50,7 +50,7 @@ locate_aotriton_images() {
 #endif
 
 static int fd_open(const char *pathname, int msvc_flags) {
-    return _open(pathname, msvc_flags);
+    return _open(pathname, msvc_flags | _O_BINARY);
 }
 
 static int fd_close(int fd) {
@@ -134,7 +134,7 @@ PackedKernel::open(std::string_view package_path) {
   }
 #if AOTRITON_KERNEL_VERBOSE
   std::cerr << "PackedKernel::open(" << package_path << ") failed."
-            << " Final status " << ret->status() << std::endl;
+            << " Final status: " << hipGetErrorString(ret->status()) << std::endl;
 #endif
   return nullptr;
 }
@@ -170,6 +170,7 @@ struct AKS2_Metadata {
 //     MB file name
 // N * varlen: Kernel Images (TODO: alignment requirements?)
 PackedKernel::PackedKernel(int fd) {
+  // std::cerr << __func__ << " called" << std::endl;
   AKS2_Header header;
   auto header_read = fd_read(fd, &header, sizeof(AKS2_Header));
   if (header_read == sizeof(AKS2_MAGIC) && std::string_view(header.magic, 4) != AKS2_MAGIC) {
@@ -197,7 +198,8 @@ PackedKernel::PackedKernel(int fd) {
   while (true) {
     if (strm.avail_in == 0) {
       strm.next_in = inbuf;
-      auto rbytes = read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
+      auto rbytes = fd_read(fd, inbuf, AOTRITON_LZMA_BUFSIZ);
+      // std::cerr << "\nread: rbytes: " << rbytes << std::endl;
       if (rbytes <= 0) {
         action = LZMA_FINISH;
         break;
