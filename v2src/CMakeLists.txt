@@ -245,7 +245,7 @@ if(NOT WIN32)
   )
   target_link_options(aotriton_v2 PRIVATE
                       -T "${AOTRITON_V2_BUILD_DIR}/set_aotriton_version.ld")
-endif(WIN32)
+endif(NOT WIN32)
 
 # Otherwise the binary size blows up
 # FIXME: Properly export symbols
