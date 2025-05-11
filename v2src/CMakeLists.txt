@@ -195,7 +195,7 @@ if(WIN32)
   set(CMAKE_DL_LIBS dlfcn-win32::dl)
 endif()
 
-add_library(aotriton_v2 SHARED ${SHIM_CC_FILES})
+add_library(aotriton_v2 SHARED ${SHIM_CC_FILES} runtime.cpp)
 set_target_properties(aotriton_v2 PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(aotriton_v2 PRIVATE ${CMAKE_DL_LIBS})
 add_dependencies(aotriton_v2 aotriton_v2_gen_shim)
