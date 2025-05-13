@@ -8,7 +8,7 @@
 
 namespace AOTRITON_NS::v2 {
 
-struct CppTune {
+struct AOTRITON_API CppTune {
 #if AOTRITON_BUILD_FOR_TUNING
   // TODO: Move them into a base class since they are common to all kernels
   int force_kernel_index = -1;
