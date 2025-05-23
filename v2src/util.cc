@@ -4,7 +4,6 @@
 #include <aotriton/util.h>
 #include <string>
 #include <unordered_map>
-#include <string_view>
 
 namespace AOTRITON_NS {
 
@@ -43,6 +42,9 @@ std::unordered_map<std::string, GpuArch> LazyArch::string_to_arch = {
   {"gfx942", GPU_ARCH_AMD_GFX942},
   {"gfx1100", GPU_ARCH_AMD_GFX1100},
   {"gfx1101", GPU_ARCH_AMD_GFX1101},
+  {"gfx1102", GPU_ARCH_AMD_GFX1102},
+  {"gfx1103", GPU_ARCH_AMD_GFX1103},
+  {"gfx1150", GPU_ARCH_AMD_GFX1150},
   {"gfx1151", GPU_ARCH_AMD_GFX1151},
   {"gfx950", GPU_ARCH_AMD_GFX950},
   {"gfx1201", GPU_ARCH_AMD_GFX1201},

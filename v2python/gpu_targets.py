@@ -7,6 +7,8 @@ AOTRITON_SUPPORTED_GPUS = {
     'Navi31'    : 'GPU_ARCH_AMD_GFX1100',
     'Navi3.5'   : 'GPU_ARCH_AMD_GFX1151',
     'Navi32'    : 'GPU_ARCH_AMD_GFX1101',
+    'Navi33'    : 'GPU_ARCH_AMD_GFX1102',
+    'Navi3i'    : 'GPU_ARCH_AMD_GFX1103',
     'Unidentified'    : 'GPU_ARCH_AMD_GFX950',
     'RX9070XT'  : 'GPU_ARCH_AMD_GFX1201',
 }
@@ -17,6 +19,8 @@ AOTRITON_GPU_ARCH_TUNING_STRING = {
     'Navi31'    : 'gfx1100',
     'Navi3.5'   : 'gfx1151',
     'Navi32'    : 'gfx1101',
+    'Navi33'    : 'gfx1102',
+    'Navi3i'    : 'gfx1103',
     'Unidentified'    : 'gfx950',
     'RX9070XT'  : 'gfx1201',
 }
@@ -24,6 +28,9 @@ AOTRITON_GPU_ARCH_TUNING_STRING = {
 AOTRITON_TUNING_DATABASE_REUSE = {
     'gfx950' : 'gfx942',
     'gfx1201' : 'gfx1100',
+    'gfx1101' : 'gfx1100',
+    'gfx1102' : 'gfx1100',
+    'gfx1103' : 'gfx1100',
     'gfx1151' : 'gfx1100',
 }
 
